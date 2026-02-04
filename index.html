@@ -41,7 +41,7 @@
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cg fill='none' stroke='%23ff2f7a' stroke-width='3'%3E%3Cpath d='M60 78 C45 66 30 56 30 42 C30 32 38 25 48 25 C55 25 59 29 60 32 C61 29 65 25 72 25 C82 25 90 32 90 42 C90 56 75 66 60 78 Z'/%3E%3C/g%3E%3C/svg%3E");
     }
 
-    /* Floating background hearts */
+    /* Floating background hearts layer */
     .hearts-layer{
       position: fixed;
       inset: 0;
@@ -51,17 +51,17 @@
     }
     .heart-float{
       position: absolute;
-      bottom: -40px;
+      bottom: -50px;
       font-size: 18px;
-      opacity: 0.32;
+      opacity: 0.30;
       filter: drop-shadow(0 10px 12px rgba(0,0,0,0.10));
       animation: floatUp linear forwards;
       will-change: transform, opacity;
     }
     @keyframes floatUp{
       0%   { transform: translateY(0) translateX(0) scale(1); opacity: 0.0; }
-      12%  { opacity: 0.32; }
-      100% { transform: translateY(-120vh) translateX(var(--drift)) scale(var(--scale)); opacity: 0.0; }
+      12%  { opacity: 0.30; }
+      100% { transform: translateY(-125vh) translateX(var(--drift)) scale(var(--scale)); opacity: 0.0; }
     }
 
     .card{
@@ -71,7 +71,7 @@
       padding: 30px 26px;
       box-shadow: var(--shadow);
       text-align:center;
-      width:min(580px, 92vw);
+      width:min(600px, 92vw);
       position:relative;
       z-index:2;
       backdrop-filter: blur(6px);
@@ -85,6 +85,13 @@
       font-weight: 400;
     }
 
+    /* Subtitle stays fixed, does NOT run away */
+    p{
+      margin: 0 0 18px;
+      color:#444;
+      font-weight: 800;
+    }
+
     .buttons{
       display:flex;
       justify-content:center;
@@ -93,7 +100,7 @@
       flex-wrap:wrap;
       position:relative;
       z-index:2;
-      margin-top: 10px;
+      margin-top: 6px;
     }
 
     /* Buttons + hover bounce/glow */
@@ -124,7 +131,7 @@
       box-shadow: 0 16px 34px rgba(255,47,122,0.28);
     }
 
-    /* No bundle */
+    /* Devil stays with the No button and runs away */
     #noWrap{
       display:inline-flex;
       align-items:center;
@@ -143,18 +150,7 @@
       box-shadow: 0 8px 18px rgba(0,0,0,0.08);
     }
 
-    /* Subtitle that RUNS AWAY with No (sits inside same wrap) */
-    #plea{
-      display:block;
-      width:100%;
-      margin-top: 10px;
-      font-weight: 800;
-      color: #444;
-      opacity: 0.92;
-    }
-    #plea .emoji{ filter: drop-shadow(0 6px 10px rgba(0,0,0,0.10)); }
-
-    /* Free-floating state */
+    /* Free-floating state for No+devil */
     #noWrap.free{
       position:fixed;
       left: 50%;
@@ -179,7 +175,7 @@
       min-height:24px;
     }
 
-    /* Toggle + small UI */
+    /* Sound toggle UI */
     .topbar{
       position: fixed;
       top: 14px;
@@ -199,7 +195,7 @@
       display:flex;
       align-items:center;
       gap:8px;
-      font-weight: 800;
+      font-weight: 900;
       color:#333;
       font-size: 14px;
       user-select:none;
@@ -227,7 +223,7 @@
       padding: 18px;
     }
     .modal .box{
-      width: min(580px, 92vw);
+      width: min(600px, 92vw);
       background: rgba(255,255,255,0.96);
       border: 1px solid rgba(0,0,0,0.08);
       border-radius: 22px;
@@ -253,13 +249,12 @@
       padding: 10px 16px;
       border-radius: 12px;
       cursor: pointer;
-      font-weight: 800;
+      font-weight: 900;
     }
   </style>
 </head>
 
 <body>
-  <!-- Sound toggle -->
   <div class="topbar">
     <label class="toggle" title="Enable/disable sounds">
       <input type="checkbox" id="soundToggle" checked />
@@ -271,9 +266,7 @@
 
   <div class="card" id="card">
     <h1>Nora, will you be my Valentine?</h1>
-
-    <!-- This subtitle is inside the runaway wrapper so it runs away too -->
-    <span id="plea">(pls say yes <span class="emoji">😇</span>)</span>
+    <p>(Choose wisely 😇)</p>
 
     <div class="buttons">
       <button id="yesBtn">Yes 💖</button>
@@ -287,7 +280,6 @@
     <div class="result" id="result"></div>
   </div>
 
-  <!-- Fireworks hearts + confetti -->
   <canvas id="fireworksCanvas"></canvas>
   <canvas id="confettiCanvas"></canvas>
 
@@ -301,7 +293,7 @@
 
   <script>
     // ---------------------------
-    // Sound (simple WebAudio beeps)
+    // Sound
     // ---------------------------
     const soundToggle = document.getElementById("soundToggle");
 
@@ -309,17 +301,13 @@
       if (!soundToggle.checked) return;
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
       if (!AudioCtx) return;
-
       const ctx = beep._ctx || (beep._ctx = new AudioCtx());
       const o = ctx.createOscillator();
       const g = ctx.createGain();
       o.type = type;
       o.frequency.value = freq;
       g.gain.value = gainVal;
-
-      o.connect(g);
-      g.connect(ctx.destination);
-
+      o.connect(g); g.connect(ctx.destination);
       const t = ctx.currentTime;
       o.start(t);
       g.gain.setValueAtTime(gainVal, t);
@@ -328,17 +316,17 @@
     }
 
     function cuteYesSound(){
-      // little triad-ish sparkle
       beep(784, 0.06, "sine", 0.07);
       setTimeout(() => beep(988, 0.06, "sine", 0.07), 70);
       setTimeout(() => beep(1175, 0.08, "sine", 0.07), 140);
     }
 
     // ---------------------------
-    // Floating background hearts
+    // Floating hearts (pink/red palette)
     // ---------------------------
     const heartsLayer = document.getElementById("heartsLayer");
     const heartChars = ["♡","♥","♡","♥","♡"];
+    const heartColors = ["#ff2f7a","#ff4d88","#ff6fa3","#ff1f4f","#ff8fb9","#ff3b6e","#ff5c9a"];
 
     function spawnHeart(){
       const heart = document.createElement("div");
@@ -354,6 +342,8 @@
       heart.style.animationDuration = duration + "s";
       heart.style.setProperty("--drift", drift);
       heart.style.setProperty("--scale", scale);
+      heart.style.color = heartColors[Math.floor(Math.random() * heartColors.length)];
+      heart.style.opacity = (0.22 + Math.random()*0.18).toFixed(2);
 
       heartsLayer.appendChild(heart);
       setTimeout(() => heart.remove(), duration * 1000);
@@ -362,21 +352,21 @@
     setInterval(spawnHeart, 450);
 
     // ---------------------------
-    // NO + subtitle runaway behavior (subtitle runs away too)
+    // NO button + devil runaway (stays on screen)
+    // After hover over the No option, the button text changes to "Nice try"
     // ---------------------------
     const pxPerInch = 96;
-    const radiusPx = 2 * pxPerInch; // ~2 inches
+    const radiusPx = 2 * pxPerInch; // used for sticky chase once she gets on it
     const margin = 10;
 
     const noWrap = document.getElementById("noWrap");
     const noBtn  = document.getElementById("noBtn");
     const yesBtn = document.getElementById("yesBtn");
     const result = document.getElementById("result");
-    const card   = document.getElementById("card");
-    const plea   = document.getElementById("plea");
 
     let isFree = false;
     let tracking = false;
+    let hasHoveredNo = false;
 
     let mouse = { x: window.innerWidth/2, y: window.innerHeight/2 };
     let prevMouse = { x: mouse.x, y: mouse.y, t: performance.now() };
@@ -397,7 +387,6 @@
       noWrap.classList.add("free", "smooth");
       noWrap.classList.remove("track");
 
-      // lock to current position (center)
       const left = rect.left + rect.width/2;
       const top  = rect.top  + rect.height/2;
 
@@ -411,12 +400,9 @@
     function moveRandomAway(){
       detachIfNeeded();
 
-      plea.textContent = "(nice try 😈)";
-
       const left = margin + Math.random() * (window.innerWidth  - 2*margin);
       const top  = margin + Math.random() * (window.innerHeight - 2*margin);
       const clamped = clampToViewport(left, top, noWrap);
-
       currentPos = { left: clamped.left, top: clamped.top };
 
       noWrap.classList.add("smooth");
@@ -424,7 +410,6 @@
       noWrap.style.left = currentPos.left + "px";
       noWrap.style.top  = currentPos.top  + "px";
 
-      // tiny "nope" sound
       beep(220, 0.05, "square", 0.03);
     }
 
@@ -445,39 +430,48 @@
     }
     window.addEventListener("mousemove", handleMouseMove);
 
-    // Sticky chase only once she gets ON it
-    noWrap.addEventListener("mouseenter", () => {
+    // On first hover over the NO option, change text to "Nice try"
+    noBtn.addEventListener("mouseenter", () => {
+      if (!hasHoveredNo) {
+        hasHoveredNo = true;
+        noBtn.textContent = "Nice try 😈";
+      }
+      // Enable sticky chase only while she's actually on it
       detachIfNeeded();
       tracking = true;
-      plea.textContent = "(pls say yes 😇)";
       noWrap.classList.remove("smooth");
       noWrap.classList.add("track");
       beep(520, 0.05, "sine", 0.03);
     });
 
-    noWrap.addEventListener("mouseleave", () => {
+    // When leaving the button, stop sticky chase (go back to random flee mode)
+    noBtn.addEventListener("mouseleave", () => {
       tracking = false;
-      plea.textContent = "(pls say yes 😇)";
       noWrap.classList.add("smooth");
       noWrap.classList.remove("track");
     });
 
-    noWrap.addEventListener("touchstart", (e) => {
+    // Mobile: treat touch as hover/enter
+    noBtn.addEventListener("touchstart", (e) => {
       e.preventDefault();
+      if (!hasHoveredNo) {
+        hasHoveredNo = true;
+        noBtn.textContent = "Nice try 😈";
+      }
       detachIfNeeded();
       tracking = true;
-      plea.textContent = "(pls say yes 😇)";
       noWrap.classList.remove("smooth");
       noWrap.classList.add("track");
       beep(520, 0.06, "sine", 0.03);
     }, { passive:false });
 
+    // Always prevent click
     noBtn.addEventListener("click", (e) => {
       e.preventDefault();
       moveRandomAway();
     });
 
-    // Animation loop: keep No within ~2 inch radius; follow rate depends on cursor speed
+    // Sticky chase loop: keep within ~2-inch radius, follow speed depends on cursor speed
     function animate(){
       const now = performance.now();
       const dt = Math.max(1, now - prevMouse.t);
@@ -489,10 +483,10 @@
       prevMouse = { x: mouse.x, y: mouse.y, t: now };
 
       if (tracking && isFree && currentPos){
-        // offset opposite movement direction (orbit-ish)
         const angle = Math.atan2(vy || 0.001, vx || 0.001) + Math.PI;
         const targetLeft = mouse.x + Math.cos(angle) * radiusPx * 0.65;
         const targetTop  = mouse.y + Math.sin(angle) * radiusPx * 0.65;
+
         const clamped = clampToViewport(targetLeft, targetTop, noWrap);
 
         const follow = clamp(0.08 + speed * 0.9, 0.08, 0.45);
@@ -521,7 +515,7 @@
     });
 
     // ---------------------------
-    // Fireworks hearts (pink->red shades) + multi-color confetti on YES
+    // Heart fireworks + multicolor confetti on YES
     // ---------------------------
     const fireworksCanvas = document.getElementById("fireworksCanvas");
     const fctx = fireworksCanvas.getContext("2d");
@@ -543,15 +537,13 @@
     window.addEventListener("resize", resizeCanvases);
     resizeCanvases();
 
-    // Heart fireworks particles
     let bursts = [];
     let fireworksRunning = false;
 
-    const heartPalette = ["#ff2f7a","#ff4d88","#ff6fa3","#ff1f4f","#ff8fb9","#ff3b6e","#ff5c9a"];
     function rand(min,max){ return min + Math.random()*(max-min); }
 
     function addBurst(x, y){
-      const n = 42 + Math.floor(Math.random()*18);
+      const n = 44 + Math.floor(Math.random()*18);
       const parts = [];
       for (let i=0;i<n;i++){
         const a = (i/n) * Math.PI * 2;
@@ -561,7 +553,7 @@
           vx: Math.cos(a)*sp*rand(0.7,1.2),
           vy: Math.sin(a)*sp*rand(0.7,1.2),
           life: rand(38, 70),
-          color: heartPalette[Math.floor(Math.random()*heartPalette.length)],
+          color: heartColors[Math.floor(Math.random()*heartColors.length)],
           size: rand(6, 12),
           rot: rand(0, Math.PI*2),
           vr: rand(-0.12, 0.12)
@@ -601,7 +593,7 @@
           p.x += p.vx;
           p.y += p.vy;
           p.vx *= 0.985;
-          p.vy = p.vy*0.985 + 0.04; // slight gravity
+          p.vy = p.vy*0.985 + 0.04;
           p.rot += p.vr;
           p.life -= 1;
 
@@ -612,17 +604,13 @@
       }
 
       if (bursts.length > 0) requestAnimationFrame(fireworksFrame);
-      else {
-        fireworksRunning = false;
-        fireworksCanvas.style.display = "none";
-      }
+      else { fireworksRunning = false; fireworksCanvas.style.display = "none"; }
     }
 
     function startHeartFireworks(){
       fireworksCanvas.style.display = "block";
       fireworksRunning = true;
 
-      // a few bursts around the screen
       addBurst(window.innerWidth*0.35, window.innerHeight*0.35);
       addBurst(window.innerWidth*0.65, window.innerHeight*0.32);
       setTimeout(()=>addBurst(window.innerWidth*0.50, window.innerHeight*0.28), 260);
@@ -630,7 +618,6 @@
 
       requestAnimationFrame(fireworksFrame);
 
-      // optional little "pop pop" sounds
       if (soundToggle.checked){
         beep(520,0.05,"sine",0.04);
         setTimeout(()=>beep(620,0.05,"sine",0.04),120);
@@ -638,7 +625,7 @@
       }
     }
 
-    // Multi-color confetti (filled)
+    // Multicolor confetti (filled)
     let confettiPieces = [];
     let confettiRunning = false;
     const confettiColors = ["#ff2f7a","#ffd166","#06d6a0","#118ab2","#9b5de5","#ff595e","#8ac926","#1982c4","#ffca3a"];
@@ -702,17 +689,13 @@
           cctx.fillStyle = p.color;
           cctx.fillRect(-p.size/2, -p.size/2, p.size, p.size);
         }
-
         cctx.restore();
       }
 
       confettiPieces = confettiPieces.filter(p => p.y < window.innerHeight + 40);
 
       if (confettiPieces.length > 0) requestAnimationFrame(confettiFrame);
-      else {
-        confettiRunning = false;
-        confettiCanvas.style.display = "none";
-      }
+      else { confettiRunning = false; confettiCanvas.style.display = "none"; }
     }
 
     function startConfetti(){
@@ -724,7 +707,8 @@
     }
 
     // ---------------------------
-    // YES click: fireworks hearts + multi-color confetti + modal
+    // YES click: keep devil running away until YES, then hide it.
+    // (We already hide noWrap on yes.)
     // ---------------------------
     const yesModal = document.getElementById("yesModal");
     const closeModalBtn = document.getElementById("closeModalBtn");
@@ -732,9 +716,10 @@
     yesBtn.addEventListener("click", () => {
       result.textContent = "YAY!!! 💘💘";
       yesBtn.disabled = true;
+
+      // Devil + No disappear only after YES
       noWrap.style.display = "none";
 
-      // sounds + visuals
       cuteYesSound();
       startHeartFireworks();
       startConfetti();
