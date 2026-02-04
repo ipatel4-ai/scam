@@ -34,8 +34,31 @@
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cg fill='none' stroke='%23ff2f7a' stroke-width='3'%3E%3Cpath d='M60 78 C45 66 30 56 30 42 C30 32 38 25 48 25 C55 25 59 29 60 32 C61 29 65 25 72 25 C82 25 90 32 90 42 C90 56 75 66 60 78 Z'/%3E%3C/g%3E%3C/svg%3E");
     }
 
+    /* Floating hearts layer */
+    .hearts-layer{
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+      overflow: hidden;
+    }
+    .heart-float{
+      position: absolute;
+      bottom: -40px;
+      font-size: 18px;
+      opacity: 0.35;
+      filter: drop-shadow(0 10px 12px rgba(0,0,0,0.10));
+      animation: floatUp linear forwards;
+      will-change: transform, opacity;
+    }
+    @keyframes floatUp{
+      0%   { transform: translateY(0) translateX(0) scale(1); opacity: 0.0; }
+      10%  { opacity: 0.35; }
+      100% { transform: translateY(-120vh) translateX(var(--drift)) scale(var(--scale)); opacity: 0.0; }
+    }
+
     .card{
-      background: rgba(255,255,255,0.92);
+      background: rgba(255,255,255,0.94);
       border: 1px solid rgba(0,0,0,0.08);
       border-radius: 20px;
       padding: 30px 26px;
@@ -136,10 +159,60 @@
       70%{ transform: translate(-50%, -50%) rotate(3deg); }
       100%{ transform: translate(-50%, -50%) rotate(0deg); }
     }
+
+    /* Confetti canvas */
+    #confettiCanvas{
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      pointer-events: none;
+      display: none;
+    }
+
+    /* "Yes" modal/message */
+    .modal{
+      position: fixed;
+      inset: 0;
+      display: none;
+      place-items: center;
+      background: rgba(0,0,0,0.18);
+      z-index: 12;
+      padding: 18px;
+    }
+    .modal .box{
+      width: min(560px, 92vw);
+      background: rgba(255,255,255,0.96);
+      border: 1px solid rgba(0,0,0,0.08);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      padding: 26px 22px;
+      text-align: center;
+    }
+    .modal h2{
+      margin: 0 0 10px;
+      font-size: clamp(22px, 3.3vw, 34px);
+      color:#222;
+    }
+    .modal .big{
+      margin: 6px 0 14px;
+      font-size: clamp(20px, 3.2vw, 30px);
+      font-weight: 800;
+      color: var(--hot);
+    }
+    .modal button{
+      background: #ffffff;
+      border: 1px solid rgba(0,0,0,0.10);
+      padding: 10px 16px;
+      border-radius: 12px;
+      cursor: pointer;
+    }
   </style>
 </head>
 
 <body>
+  <!-- floating hearts -->
+  <div class="hearts-layer" id="heartsLayer"></div>
+
   <div class="card" id="card">
     <h1>Do you want to be my valentine?</h1>
     <p>(Choose wisely 😌)</p>
@@ -157,7 +230,22 @@
     <div class="result" id="result"></div>
   </div>
 
+  <!-- Confetti -->
+  <canvas id="confettiCanvas"></canvas>
+
+  <!-- Yes modal -->
+  <div class="modal" id="yesModal" role="dialog" aria-modal="true" aria-label="Valentine message">
+    <div class="box">
+      <h2>YAY!!! 💘💘</h2>
+      <div class="big">You + me + pastors dinner date ;-)</div>
+      <button id="closeModalBtn">Aww okay 😄</button>
+    </div>
+  </div>
+
   <script>
+    // ---------------------------
+    // NO BUTTON RUNAWAY LOGIC
+    // ---------------------------
     const noWrap = document.getElementById("noWrap");
     const noBtn  = document.getElementById("noBtn");
     const yesBtn = document.getElementById("yesBtn");
@@ -184,11 +272,10 @@
     function detachIfNeeded() {
       if (isFree) return;
 
-      // Remember its current screen position so it doesn't "jump"
       const rect = noWrap.getBoundingClientRect();
 
-      // Make it free-floating, locked to its current position
       noWrap.classList.add("free");
+      // lock it to current spot (center-based)
       noWrap.style.left = `${rect.left + rect.width/2}px`;
       noWrap.style.top  = `${rect.top  + rect.height/2}px`;
 
@@ -221,46 +308,179 @@
       noWrap.style.top  = `${clamp(y, margin, maxY)}px`;
     }
 
-    // Proximity detection (works even when it's still in the button row)
     function handleMouseMove(e) {
       const r = noWrap.getBoundingClientRect();
       const cx = r.left + r.width / 2;
       const cy = r.top  + r.height / 2;
 
       const dist = Math.hypot(e.clientX - cx, e.clientY - cy);
-
-      // Only run away when she gets close
       const triggerDistance = 120;
 
-      if (dist < triggerDistance) {
-        moveNoSomewhere();
-      }
+      if (dist < triggerDistance) moveNoSomewhere();
     }
 
     window.addEventListener("mousemove", handleMouseMove);
 
-    // Mobile: if she tries to tap near it, it runs
     noWrap.addEventListener("touchstart", (e) => {
       e.preventDefault();
       moveNoSomewhere();
     }, { passive: false });
 
-    // If somehow clicked, still escape
     noBtn.addEventListener("click", (e) => {
       e.preventDefault();
       moveNoSomewhere();
     });
 
+    // ---------------------------
+    // FLOATING HEARTS ANIMATION
+    // ---------------------------
+    const heartsLayer = document.getElementById("heartsLayer");
+    const heartChars = ["♡","♥","♡","♥","♡"];
+
+    function spawnHeart() {
+      const heart = document.createElement("div");
+      heart.className = "heart-float";
+      heart.textContent = heartChars[Math.floor(Math.random() * heartChars.length)];
+
+      const x = Math.random() * 100; // vw
+      const duration = 6 + Math.random() * 6; // seconds
+      const drift = (Math.random() * 120 - 60) + "px";
+      const scale = (0.8 + Math.random() * 1.2).toFixed(2);
+
+      heart.style.left = x + "vw";
+      heart.style.animationDuration = duration + "s";
+      heart.style.setProperty("--drift", drift);
+      heart.style.setProperty("--scale", scale);
+
+      heartsLayer.appendChild(heart);
+
+      // cleanup
+      setTimeout(() => heart.remove(), duration * 1000);
+    }
+
+    // Spawn a few immediately then at intervals
+    for (let i=0; i<10; i++) setTimeout(spawnHeart, i * 250);
+    setInterval(spawnHeart, 450);
+
+    // ---------------------------
+    // CONFETTI (CANVAS)
+    // ---------------------------
+    const canvas = document.getElementById("confettiCanvas");
+    const ctx = canvas.getContext("2d");
+
+    function resizeCanvas(){
+      canvas.width = window.innerWidth * devicePixelRatio;
+      canvas.height = window.innerHeight * devicePixelRatio;
+      ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+    }
+    window.addEventListener("resize", resizeCanvas);
+    resizeCanvas();
+
+    let confettiPieces = [];
+    let confettiRunning = false;
+
+    function makeConfetti(count = 160){
+      confettiPieces = Array.from({length: count}).map(() => {
+        const size = 6 + Math.random() * 8;
+        return {
+          x: Math.random() * window.innerWidth,
+          y: -20 - Math.random() * window.innerHeight * 0.3,
+          vx: (Math.random() - 0.5) * 3.2,
+          vy: 2.5 + Math.random() * 4.5,
+          r: Math.random() * Math.PI * 2,
+          vr: (Math.random() - 0.5) * 0.2,
+          size,
+          shape: Math.random() < 0.25 ? "heart" : "rect",
+          wobble: Math.random() * 1000
+        };
+      });
+    }
+
+    function drawHeart(x, y, s){
+      ctx.beginPath();
+      const topCurveHeight = s * 0.3;
+      ctx.moveTo(x, y + topCurveHeight);
+      ctx.bezierCurveTo(x, y, x - s/2, y, x - s/2, y + topCurveHeight);
+      ctx.bezierCurveTo(x - s/2, y + (s + topCurveHeight)/2, x, y + (s + topCurveHeight)/2, x, y + s);
+      ctx.bezierCurveTo(x, y + (s + topCurveHeight)/2, x + s/2, y + (s + topCurveHeight)/2, x + s/2, y + topCurveHeight);
+      ctx.bezierCurveTo(x + s/2, y, x, y, x, y + topCurveHeight);
+      ctx.closePath();
+      ctx.stroke();
+    }
+
+    function confettiFrame(){
+      if (!confettiRunning) return;
+
+      ctx.clearRect(0,0,window.innerWidth, window.innerHeight);
+
+      for (const p of confettiPieces){
+        p.x += p.vx + Math.sin((performance.now() + p.wobble)/220) * 0.6;
+        p.y += p.vy;
+        p.r += p.vr;
+
+        // draw outlines (no fixed colors — just use strokeStyle default)
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.r);
+
+        if (p.shape === "heart"){
+          ctx.lineWidth = 2;
+          ctx.globalAlpha = 0.8;
+          drawHeart(0, 0, p.size);
+        } else {
+          ctx.lineWidth = 2;
+          ctx.globalAlpha = 0.75;
+          ctx.strokeRect(-p.size/2, -p.size/2, p.size, p.size);
+        }
+
+        ctx.restore();
+      }
+
+      // remove pieces that fell off screen
+      confettiPieces = confettiPieces.filter(p => p.y < window.innerHeight + 40);
+
+      if (confettiPieces.length > 0) {
+        requestAnimationFrame(confettiFrame);
+      } else {
+        confettiRunning = false;
+        canvas.style.display = "none";
+      }
+    }
+
+    function startConfetti(){
+      resizeCanvas();
+      canvas.style.display = "block";
+      makeConfetti(190);
+      confettiRunning = true;
+      requestAnimationFrame(confettiFrame);
+      // stop after ~3.5 seconds even if some remain
+      setTimeout(() => {
+        confettiPieces = [];
+      }, 3500);
+    }
+
+    // ---------------------------
+    // YES CLICK: CONFETTI + MODAL
+    // ---------------------------
+    const yesModal = document.getElementById("yesModal");
+    const closeModalBtn = document.getElementById("closeModalBtn");
+
     yesBtn.addEventListener("click", () => {
-      result.textContent = "YAY!!! 💘💘 See you on Valentine’s 😄";
+      result.textContent = "YAY!!! 💘💘";
       yesBtn.disabled = true;
       noWrap.style.display = "none";
+
+      startConfetti();
+      yesModal.style.display = "grid";
     });
 
-    // Keep it on screen after resize if it's already free
-    window.addEventListener("resize", () => {
-      if (!isFree) return;
-      moveNoSomewhere();
+    closeModalBtn.addEventListener("click", () => {
+      yesModal.style.display = "none";
+    });
+
+    // click outside modal closes it
+    yesModal.addEventListener("click", (e) => {
+      if (e.target === yesModal) yesModal.style.display = "none";
     });
   </script>
 </body>
