@@ -3,12 +3,19 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Valentine?</title>
+  <title>Nora, will you be my Valentine?</title>
+
+  <!-- Cute fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;700;800&family=Pacifico&display=swap" rel="stylesheet">
+
   <style>
     :root{
       --pink:#ffe4ef;
       --hot:#ff2f7a;
       --shadow: 0 14px 40px rgba(0,0,0,0.12);
+      --card:#ffffffee;
     }
 
     body{
@@ -16,13 +23,13 @@
       height:100vh;
       display:grid;
       place-items:center;
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      font-family:Poppins, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
       overflow:hidden;
       background-color: var(--pink);
       position:relative;
     }
 
-    /* Cute heart-outline pattern background */
+    /* Heart-outline pattern background */
     body::before{
       content:"";
       position:fixed;
@@ -34,7 +41,7 @@
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cg fill='none' stroke='%23ff2f7a' stroke-width='3'%3E%3Cpath d='M60 78 C45 66 30 56 30 42 C30 32 38 25 48 25 C55 25 59 29 60 32 C61 29 65 25 72 25 C82 25 90 32 90 42 C90 56 75 66 60 78 Z'/%3E%3C/g%3E%3C/svg%3E");
     }
 
-    /* Floating hearts layer */
+    /* Floating background hearts */
     .hearts-layer{
       position: fixed;
       inset: 0;
@@ -46,25 +53,25 @@
       position: absolute;
       bottom: -40px;
       font-size: 18px;
-      opacity: 0.35;
+      opacity: 0.32;
       filter: drop-shadow(0 10px 12px rgba(0,0,0,0.10));
       animation: floatUp linear forwards;
       will-change: transform, opacity;
     }
     @keyframes floatUp{
       0%   { transform: translateY(0) translateX(0) scale(1); opacity: 0.0; }
-      10%  { opacity: 0.35; }
+      12%  { opacity: 0.32; }
       100% { transform: translateY(-120vh) translateX(var(--drift)) scale(var(--scale)); opacity: 0.0; }
     }
 
     .card{
-      background: rgba(255,255,255,0.94);
+      background: var(--card);
       border: 1px solid rgba(0,0,0,0.08);
-      border-radius: 20px;
+      border-radius: 22px;
       padding: 30px 26px;
       box-shadow: var(--shadow);
       text-align:center;
-      width:min(560px, 92vw);
+      width:min(580px, 92vw);
       position:relative;
       z-index:2;
       backdrop-filter: blur(6px);
@@ -74,11 +81,8 @@
       margin:0 0 10px;
       font-size: clamp(28px, 4vw, 44px);
       color:#222;
-    }
-
-    p{
-      margin: 0 0 18px;
-      color:#444;
+      font-family: Pacifico, Poppins, system-ui;
+      font-weight: 400;
     }
 
     .buttons{
@@ -89,17 +93,25 @@
       flex-wrap:wrap;
       position:relative;
       z-index:2;
+      margin-top: 10px;
     }
 
+    /* Buttons + hover bounce/glow */
     button{
       font-size:18px;
       padding:12px 22px;
-      border-radius:12px;
+      border-radius:14px;
       border:none;
       cursor:pointer;
       user-select:none;
       -webkit-tap-highlight-color:transparent;
-      transition: transform 120ms ease, filter 120ms ease;
+      font-weight: 800;
+      transition: transform 160ms ease, box-shadow 180ms ease, filter 180ms ease;
+    }
+    button:hover{
+      transform: translateY(-2px) scale(1.03);
+      box-shadow: 0 14px 28px rgba(0,0,0,0.12);
+      filter: brightness(1.02);
     }
     button:active{ transform: scale(0.98); }
 
@@ -108,79 +120,114 @@
       color:white;
       box-shadow: 0 10px 22px rgba(255,47,122,0.25);
     }
+    #yesBtn:hover{
+      box-shadow: 0 16px 34px rgba(255,47,122,0.28);
+    }
 
-    /* "No bundle": devil + button */
+    /* No bundle */
     #noWrap{
       display:inline-flex;
       align-items:center;
       gap:10px;
+      position: relative;
     }
-
     #devil{
       font-size:24px;
       line-height:1;
       filter: drop-shadow(0 6px 10px rgba(0,0,0,0.15));
       transform: translateY(1px);
     }
-
     #noBtn{
       background:#ededed;
       color:#222;
+      box-shadow: 0 8px 18px rgba(0,0,0,0.08);
     }
 
-    .result{
-      margin-top:16px;
-      font-size:18px;
-      font-weight:700;
-      color: var(--hot);
-      min-height:24px;
+    /* Subtitle that RUNS AWAY with No (sits inside same wrap) */
+    #plea{
+      display:block;
+      width:100%;
+      margin-top: 10px;
+      font-weight: 800;
+      color: #444;
+      opacity: 0.92;
     }
+    #plea .emoji{ filter: drop-shadow(0 6px 10px rgba(0,0,0,0.10)); }
 
-    /* When the No bundle becomes "free", it floats around the screen smoothly */
+    /* Free-floating state */
     #noWrap.free{
       position:fixed;
       left: 50%;
       top: 50%;
       transform: translate(-50%, -50%);
       z-index:5;
-      transition: left 420ms cubic-bezier(.2,.9,.2,1),
-                  top  420ms cubic-bezier(.2,.9,.2,1);
       will-change:left, top;
     }
-
-    /* Little wiggle when it moves */
-    #noWrap.free.scamper{
-      animation: wiggle 240ms ease-in-out;
+    #noWrap.smooth{
+      transition: left 420ms cubic-bezier(.2,.9,.2,1),
+                  top  420ms cubic-bezier(.2,.9,.2,1);
+    }
+    #noWrap.track{
+      transition: none;
     }
 
-    @keyframes wiggle{
-      0% { transform: translate(-50%, -50%) rotate(0deg); }
-      35%{ transform: translate(-50%, -50%) rotate(-4deg); }
-      70%{ transform: translate(-50%, -50%) rotate(3deg); }
-      100%{ transform: translate(-50%, -50%) rotate(0deg); }
+    .result{
+      margin-top:16px;
+      font-size:18px;
+      font-weight:900;
+      color: var(--hot);
+      min-height:24px;
     }
 
-    /* Confetti canvas */
-    #confettiCanvas{
+    /* Toggle + small UI */
+    .topbar{
+      position: fixed;
+      top: 14px;
+      right: 14px;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255,255,255,0.70);
+      border: 1px solid rgba(0,0,0,0.08);
+      border-radius: 14px;
+      padding: 8px 10px;
+      box-shadow: 0 10px 24px rgba(0,0,0,0.10);
+      backdrop-filter: blur(6px);
+    }
+    .toggle{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      font-weight: 800;
+      color:#333;
+      font-size: 14px;
+      user-select:none;
+    }
+    .toggle input{ transform: translateY(1px); }
+
+    /* Canvases */
+    #confettiCanvas, #fireworksCanvas{
       position: fixed;
       inset: 0;
-      z-index: 10;
       pointer-events: none;
       display: none;
     }
+    #confettiCanvas{ z-index: 10; }
+    #fireworksCanvas{ z-index: 9; }
 
-    /* "Yes" modal/message */
+    /* Yes modal */
     .modal{
       position: fixed;
       inset: 0;
       display: none;
       place-items: center;
       background: rgba(0,0,0,0.18);
-      z-index: 12;
+      z-index: 30;
       padding: 18px;
     }
     .modal .box{
-      width: min(560px, 92vw);
+      width: min(580px, 92vw);
       background: rgba(255,255,255,0.96);
       border: 1px solid rgba(0,0,0,0.08);
       border-radius: 22px;
@@ -192,11 +239,12 @@
       margin: 0 0 10px;
       font-size: clamp(22px, 3.3vw, 34px);
       color:#222;
+      font-weight: 900;
     }
     .modal .big{
       margin: 6px 0 14px;
       font-size: clamp(20px, 3.2vw, 30px);
-      font-weight: 800;
+      font-weight: 900;
       color: var(--hot);
     }
     .modal button{
@@ -205,22 +253,31 @@
       padding: 10px 16px;
       border-radius: 12px;
       cursor: pointer;
+      font-weight: 800;
     }
   </style>
 </head>
 
 <body>
-  <!-- floating hearts -->
+  <!-- Sound toggle -->
+  <div class="topbar">
+    <label class="toggle" title="Enable/disable sounds">
+      <input type="checkbox" id="soundToggle" checked />
+      🔊 Sound
+    </label>
+  </div>
+
   <div class="hearts-layer" id="heartsLayer"></div>
 
   <div class="card" id="card">
-    <h1>Do you want to be my valentine?</h1>
-    <p>(Choose wisely 😌)</p>
+    <h1>Nora, will you be my Valentine?</h1>
 
-    <div class="buttons" id="buttonRow">
+    <!-- This subtitle is inside the runaway wrapper so it runs away too -->
+    <span id="plea">(pls say yes <span class="emoji">😇</span>)</span>
+
+    <div class="buttons">
       <button id="yesBtn">Yes 💖</button>
 
-      <!-- Starts normally right next to Yes -->
       <span id="noWrap">
         <span id="devil" title="Nice try 😈">😈</span>
         <button id="noBtn">No 🙃</button>
@@ -230,120 +287,66 @@
     <div class="result" id="result"></div>
   </div>
 
-  <!-- Confetti -->
+  <!-- Fireworks hearts + confetti -->
+  <canvas id="fireworksCanvas"></canvas>
   <canvas id="confettiCanvas"></canvas>
 
-  <!-- Yes modal -->
   <div class="modal" id="yesModal" role="dialog" aria-modal="true" aria-label="Valentine message">
     <div class="box">
       <h2>YAY!!! 💘💘</h2>
-      <div class="big">You + me + pastors dinner date ;-)</div>
+      <div class="big">Nora + Ish + Pastor’s dinner date 😉</div>
       <button id="closeModalBtn">Aww okay 😄</button>
     </div>
   </div>
 
   <script>
     // ---------------------------
-    // NO BUTTON RUNAWAY LOGIC
+    // Sound (simple WebAudio beeps)
     // ---------------------------
-    const noWrap = document.getElementById("noWrap");
-    const noBtn  = document.getElementById("noBtn");
-    const yesBtn = document.getElementById("yesBtn");
-    const result = document.getElementById("result");
-    const card   = document.getElementById("card");
+    const soundToggle = document.getElementById("soundToggle");
 
-    let isFree = false;
+    function beep(freq=660, duration=0.06, type="sine", gainVal=0.06){
+      if (!soundToggle.checked) return;
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
 
-    function clamp(val, min, max) {
-      return Math.max(min, Math.min(max, val));
+      const ctx = beep._ctx || (beep._ctx = new AudioCtx());
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = type;
+      o.frequency.value = freq;
+      g.gain.value = gainVal;
+
+      o.connect(g);
+      g.connect(ctx.destination);
+
+      const t = ctx.currentTime;
+      o.start(t);
+      g.gain.setValueAtTime(gainVal, t);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + duration);
+      o.stop(t + duration);
     }
 
-    function isOverlappingCard(x, y, w, h) {
-      const r = card.getBoundingClientRect();
-      const pad = 18;
-      return !(
-        x + w < r.left - pad ||
-        x > r.right + pad ||
-        y + h < r.top - pad ||
-        y > r.bottom + pad
-      );
+    function cuteYesSound(){
+      // little triad-ish sparkle
+      beep(784, 0.06, "sine", 0.07);
+      setTimeout(() => beep(988, 0.06, "sine", 0.07), 70);
+      setTimeout(() => beep(1175, 0.08, "sine", 0.07), 140);
     }
-
-    function detachIfNeeded() {
-      if (isFree) return;
-
-      const rect = noWrap.getBoundingClientRect();
-
-      noWrap.classList.add("free");
-      // lock it to current spot (center-based)
-      noWrap.style.left = `${rect.left + rect.width/2}px`;
-      noWrap.style.top  = `${rect.top  + rect.height/2}px`;
-
-      isFree = true;
-    }
-
-    function moveNoSomewhere() {
-      if (!isFree) detachIfNeeded();
-
-      const rect = noWrap.getBoundingClientRect();
-      const w = rect.width;
-      const h = rect.height;
-
-      const margin = 12;
-      const maxX = window.innerWidth  - w - margin;
-      const maxY = window.innerHeight - h - margin;
-
-      let x, y, tries = 0;
-      do {
-        x = margin + Math.random() * Math.max(0, maxX - margin);
-        y = margin + Math.random() * Math.max(0, maxY - margin);
-        tries++;
-      } while (isOverlappingCard(x, y, w, h) && tries < 10);
-
-      noWrap.classList.remove("scamper");
-      void noWrap.offsetWidth; // retrigger animation
-      noWrap.classList.add("scamper");
-
-      noWrap.style.left = `${clamp(x, margin, maxX)}px`;
-      noWrap.style.top  = `${clamp(y, margin, maxY)}px`;
-    }
-
-    function handleMouseMove(e) {
-      const r = noWrap.getBoundingClientRect();
-      const cx = r.left + r.width / 2;
-      const cy = r.top  + r.height / 2;
-
-      const dist = Math.hypot(e.clientX - cx, e.clientY - cy);
-      const triggerDistance = 120;
-
-      if (dist < triggerDistance) moveNoSomewhere();
-    }
-
-    window.addEventListener("mousemove", handleMouseMove);
-
-    noWrap.addEventListener("touchstart", (e) => {
-      e.preventDefault();
-      moveNoSomewhere();
-    }, { passive: false });
-
-    noBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      moveNoSomewhere();
-    });
 
     // ---------------------------
-    // FLOATING HEARTS ANIMATION
+    // Floating background hearts
     // ---------------------------
     const heartsLayer = document.getElementById("heartsLayer");
     const heartChars = ["♡","♥","♡","♥","♡"];
 
-    function spawnHeart() {
+    function spawnHeart(){
       const heart = document.createElement("div");
       heart.className = "heart-float";
       heart.textContent = heartChars[Math.floor(Math.random() * heartChars.length)];
 
-      const x = Math.random() * 100; // vw
-      const duration = 6 + Math.random() * 6; // seconds
+      const x = Math.random() * 100;
+      const duration = 6 + Math.random() * 6;
       const drift = (Math.random() * 120 - 60) + "px";
       const scale = (0.8 + Math.random() * 1.2).toFixed(2);
 
@@ -353,114 +356,375 @@
       heart.style.setProperty("--scale", scale);
 
       heartsLayer.appendChild(heart);
-
-      // cleanup
       setTimeout(() => heart.remove(), duration * 1000);
     }
-
-    // Spawn a few immediately then at intervals
     for (let i=0; i<10; i++) setTimeout(spawnHeart, i * 250);
     setInterval(spawnHeart, 450);
 
     // ---------------------------
-    // CONFETTI (CANVAS)
+    // NO + subtitle runaway behavior (subtitle runs away too)
     // ---------------------------
-    const canvas = document.getElementById("confettiCanvas");
-    const ctx = canvas.getContext("2d");
+    const pxPerInch = 96;
+    const radiusPx = 2 * pxPerInch; // ~2 inches
+    const margin = 10;
 
-    function resizeCanvas(){
-      canvas.width = window.innerWidth * devicePixelRatio;
-      canvas.height = window.innerHeight * devicePixelRatio;
-      ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+    const noWrap = document.getElementById("noWrap");
+    const noBtn  = document.getElementById("noBtn");
+    const yesBtn = document.getElementById("yesBtn");
+    const result = document.getElementById("result");
+    const card   = document.getElementById("card");
+    const plea   = document.getElementById("plea");
+
+    let isFree = false;
+    let tracking = false;
+
+    let mouse = { x: window.innerWidth/2, y: window.innerHeight/2 };
+    let prevMouse = { x: mouse.x, y: mouse.y, t: performance.now() };
+    let currentPos = null;
+
+    function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
+
+    function clampToViewport(left, top, el){
+      const r = el.getBoundingClientRect();
+      const maxL = window.innerWidth  - r.width  - margin;
+      const maxT = window.innerHeight - r.height - margin;
+      return { left: clamp(left, margin, maxL), top: clamp(top, margin, maxT) };
     }
-    window.addEventListener("resize", resizeCanvas);
-    resizeCanvas();
 
+    function detachIfNeeded(){
+      if (isFree) return;
+      const rect = noWrap.getBoundingClientRect();
+      noWrap.classList.add("free", "smooth");
+      noWrap.classList.remove("track");
+
+      // lock to current position (center)
+      const left = rect.left + rect.width/2;
+      const top  = rect.top  + rect.height/2;
+
+      currentPos = { left, top };
+      noWrap.style.left = left + "px";
+      noWrap.style.top  = top  + "px";
+      noWrap.style.transform = "translate(-50%, -50%)";
+      isFree = true;
+    }
+
+    function moveRandomAway(){
+      detachIfNeeded();
+
+      plea.textContent = "(nice try 😈)";
+
+      const left = margin + Math.random() * (window.innerWidth  - 2*margin);
+      const top  = margin + Math.random() * (window.innerHeight - 2*margin);
+      const clamped = clampToViewport(left, top, noWrap);
+
+      currentPos = { left: clamped.left, top: clamped.top };
+
+      noWrap.classList.add("smooth");
+      noWrap.classList.remove("track");
+      noWrap.style.left = currentPos.left + "px";
+      noWrap.style.top  = currentPos.top  + "px";
+
+      // tiny "nope" sound
+      beep(220, 0.05, "square", 0.03);
+    }
+
+    function handleMouseMove(e){
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+
+      if (tracking) return;
+
+      const r = noWrap.getBoundingClientRect();
+      const cx = r.left + r.width/2;
+      const cy = r.top  + r.height/2;
+
+      const dist = Math.hypot(mouse.x - cx, mouse.y - cy);
+      const triggerDistance = 120;
+
+      if (dist < triggerDistance) moveRandomAway();
+    }
+    window.addEventListener("mousemove", handleMouseMove);
+
+    // Sticky chase only once she gets ON it
+    noWrap.addEventListener("mouseenter", () => {
+      detachIfNeeded();
+      tracking = true;
+      plea.textContent = "(pls say yes 😇)";
+      noWrap.classList.remove("smooth");
+      noWrap.classList.add("track");
+      beep(520, 0.05, "sine", 0.03);
+    });
+
+    noWrap.addEventListener("mouseleave", () => {
+      tracking = false;
+      plea.textContent = "(pls say yes 😇)";
+      noWrap.classList.add("smooth");
+      noWrap.classList.remove("track");
+    });
+
+    noWrap.addEventListener("touchstart", (e) => {
+      e.preventDefault();
+      detachIfNeeded();
+      tracking = true;
+      plea.textContent = "(pls say yes 😇)";
+      noWrap.classList.remove("smooth");
+      noWrap.classList.add("track");
+      beep(520, 0.06, "sine", 0.03);
+    }, { passive:false });
+
+    noBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      moveRandomAway();
+    });
+
+    // Animation loop: keep No within ~2 inch radius; follow rate depends on cursor speed
+    function animate(){
+      const now = performance.now();
+      const dt = Math.max(1, now - prevMouse.t);
+
+      const vx = (mouse.x - prevMouse.x) / dt;
+      const vy = (mouse.y - prevMouse.y) / dt;
+      const speed = Math.hypot(vx, vy);
+
+      prevMouse = { x: mouse.x, y: mouse.y, t: now };
+
+      if (tracking && isFree && currentPos){
+        // offset opposite movement direction (orbit-ish)
+        const angle = Math.atan2(vy || 0.001, vx || 0.001) + Math.PI;
+        const targetLeft = mouse.x + Math.cos(angle) * radiusPx * 0.65;
+        const targetTop  = mouse.y + Math.sin(angle) * radiusPx * 0.65;
+        const clamped = clampToViewport(targetLeft, targetTop, noWrap);
+
+        const follow = clamp(0.08 + speed * 0.9, 0.08, 0.45);
+
+        currentPos.left += (clamped.left - currentPos.left) * follow;
+        currentPos.top  += (clamped.top  - currentPos.top)  * follow;
+
+        const again = clampToViewport(currentPos.left, currentPos.top, noWrap);
+        currentPos.left = again.left;
+        currentPos.top  = again.top;
+
+        noWrap.style.left = currentPos.left + "px";
+        noWrap.style.top  = currentPos.top  + "px";
+      }
+
+      requestAnimationFrame(animate);
+    }
+    requestAnimationFrame(animate);
+
+    window.addEventListener("resize", () => {
+      if (!isFree || !currentPos) return;
+      const clamped = clampToViewport(currentPos.left, currentPos.top, noWrap);
+      currentPos = clamped;
+      noWrap.style.left = currentPos.left + "px";
+      noWrap.style.top  = currentPos.top  + "px";
+    });
+
+    // ---------------------------
+    // Fireworks hearts (pink->red shades) + multi-color confetti on YES
+    // ---------------------------
+    const fireworksCanvas = document.getElementById("fireworksCanvas");
+    const fctx = fireworksCanvas.getContext("2d");
+
+    const confettiCanvas = document.getElementById("confettiCanvas");
+    const cctx = confettiCanvas.getContext("2d");
+
+    function resizeCanvases(){
+      const dpr = devicePixelRatio || 1;
+
+      fireworksCanvas.width  = window.innerWidth * dpr;
+      fireworksCanvas.height = window.innerHeight * dpr;
+      fctx.setTransform(dpr,0,0,dpr,0,0);
+
+      confettiCanvas.width  = window.innerWidth * dpr;
+      confettiCanvas.height = window.innerHeight * dpr;
+      cctx.setTransform(dpr,0,0,dpr,0,0);
+    }
+    window.addEventListener("resize", resizeCanvases);
+    resizeCanvases();
+
+    // Heart fireworks particles
+    let bursts = [];
+    let fireworksRunning = false;
+
+    const heartPalette = ["#ff2f7a","#ff4d88","#ff6fa3","#ff1f4f","#ff8fb9","#ff3b6e","#ff5c9a"];
+    function rand(min,max){ return min + Math.random()*(max-min); }
+
+    function addBurst(x, y){
+      const n = 42 + Math.floor(Math.random()*18);
+      const parts = [];
+      for (let i=0;i<n;i++){
+        const a = (i/n) * Math.PI * 2;
+        const sp = rand(2.0, 5.6);
+        parts.push({
+          x, y,
+          vx: Math.cos(a)*sp*rand(0.7,1.2),
+          vy: Math.sin(a)*sp*rand(0.7,1.2),
+          life: rand(38, 70),
+          color: heartPalette[Math.floor(Math.random()*heartPalette.length)],
+          size: rand(6, 12),
+          rot: rand(0, Math.PI*2),
+          vr: rand(-0.12, 0.12)
+        });
+      }
+      bursts.push(parts);
+    }
+
+    function drawHeartOutline(ctx, x, y, s, color){
+      ctx.save();
+      ctx.translate(x,y);
+      ctx.beginPath();
+      const t = s * 0.3;
+      ctx.moveTo(0, t);
+      ctx.bezierCurveTo(0, 0, -s/2, 0, -s/2, t);
+      ctx.bezierCurveTo(-s/2, (s+t)/2, 0, (s+t)/2, 0, s);
+      ctx.bezierCurveTo(0, (s+t)/2, s/2, (s+t)/2, s/2, t);
+      ctx.bezierCurveTo(s/2, 0, 0, 0, 0, t);
+      ctx.closePath();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.globalAlpha = 0.85;
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function fireworksFrame(){
+      if (!fireworksRunning) return;
+
+      fctx.clearRect(0,0,window.innerWidth, window.innerHeight);
+
+      bursts = bursts.filter(parts => parts.length > 0);
+
+      for (const parts of bursts){
+        for (let i=parts.length-1;i>=0;i--){
+          const p = parts[i];
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vx *= 0.985;
+          p.vy = p.vy*0.985 + 0.04; // slight gravity
+          p.rot += p.vr;
+          p.life -= 1;
+
+          drawHeartOutline(fctx, p.x, p.y, p.size, p.color);
+
+          if (p.life <= 0 || p.y > window.innerHeight + 30) parts.splice(i,1);
+        }
+      }
+
+      if (bursts.length > 0) requestAnimationFrame(fireworksFrame);
+      else {
+        fireworksRunning = false;
+        fireworksCanvas.style.display = "none";
+      }
+    }
+
+    function startHeartFireworks(){
+      fireworksCanvas.style.display = "block";
+      fireworksRunning = true;
+
+      // a few bursts around the screen
+      addBurst(window.innerWidth*0.35, window.innerHeight*0.35);
+      addBurst(window.innerWidth*0.65, window.innerHeight*0.32);
+      setTimeout(()=>addBurst(window.innerWidth*0.50, window.innerHeight*0.28), 260);
+      setTimeout(()=>addBurst(window.innerWidth*0.50, window.innerHeight*0.45), 520);
+
+      requestAnimationFrame(fireworksFrame);
+
+      // optional little "pop pop" sounds
+      if (soundToggle.checked){
+        beep(520,0.05,"sine",0.04);
+        setTimeout(()=>beep(620,0.05,"sine",0.04),120);
+        setTimeout(()=>beep(740,0.06,"sine",0.04),240);
+      }
+    }
+
+    // Multi-color confetti (filled)
     let confettiPieces = [];
     let confettiRunning = false;
+    const confettiColors = ["#ff2f7a","#ffd166","#06d6a0","#118ab2","#9b5de5","#ff595e","#8ac926","#1982c4","#ffca3a"];
 
-    function makeConfetti(count = 160){
+    function makeConfetti(count=240){
       confettiPieces = Array.from({length: count}).map(() => {
-        const size = 6 + Math.random() * 8;
+        const size = 5 + Math.random()*9;
         return {
-          x: Math.random() * window.innerWidth,
-          y: -20 - Math.random() * window.innerHeight * 0.3,
-          vx: (Math.random() - 0.5) * 3.2,
-          vy: 2.5 + Math.random() * 4.5,
-          r: Math.random() * Math.PI * 2,
-          vr: (Math.random() - 0.5) * 0.2,
+          x: Math.random()*window.innerWidth,
+          y: -20 - Math.random()*window.innerHeight*0.25,
+          vx: (Math.random()-0.5)*4.2,
+          vy: 2.8 + Math.random()*5.2,
+          rot: Math.random()*Math.PI*2,
+          vr: (Math.random()-0.5)*0.25,
           size,
-          shape: Math.random() < 0.25 ? "heart" : "rect",
-          wobble: Math.random() * 1000
+          color: confettiColors[Math.floor(Math.random()*confettiColors.length)],
+          shape: Math.random()<0.2 ? "heart" : "rect",
+          wobble: Math.random()*1000
         };
       });
     }
 
-    function drawHeart(x, y, s){
+    function fillHeart(ctx, x, y, s, color){
+      ctx.save();
+      ctx.translate(x,y);
       ctx.beginPath();
-      const topCurveHeight = s * 0.3;
-      ctx.moveTo(x, y + topCurveHeight);
-      ctx.bezierCurveTo(x, y, x - s/2, y, x - s/2, y + topCurveHeight);
-      ctx.bezierCurveTo(x - s/2, y + (s + topCurveHeight)/2, x, y + (s + topCurveHeight)/2, x, y + s);
-      ctx.bezierCurveTo(x, y + (s + topCurveHeight)/2, x + s/2, y + (s + topCurveHeight)/2, x + s/2, y + topCurveHeight);
-      ctx.bezierCurveTo(x + s/2, y, x, y, x, y + topCurveHeight);
+      const t = s*0.3;
+      ctx.moveTo(0, t);
+      ctx.bezierCurveTo(0, 0, -s/2, 0, -s/2, t);
+      ctx.bezierCurveTo(-s/2, (s+t)/2, 0, (s+t)/2, 0, s);
+      ctx.bezierCurveTo(0, (s+t)/2, s/2, (s+t)/2, s/2, t);
+      ctx.bezierCurveTo(s/2, 0, 0, 0, 0, t);
       ctx.closePath();
-      ctx.stroke();
+      ctx.fillStyle = color;
+      ctx.globalAlpha = 0.92;
+      ctx.fill();
+      ctx.restore();
     }
 
     function confettiFrame(){
       if (!confettiRunning) return;
 
-      ctx.clearRect(0,0,window.innerWidth, window.innerHeight);
+      cctx.clearRect(0,0,window.innerWidth, window.innerHeight);
 
       for (const p of confettiPieces){
-        p.x += p.vx + Math.sin((performance.now() + p.wobble)/220) * 0.6;
+        p.x += p.vx + Math.sin((performance.now() + p.wobble)/220)*0.7;
         p.y += p.vy;
-        p.r += p.vr;
+        p.rot += p.vr;
+        p.vx *= 0.992;
+        p.vy *= 0.995;
+        p.vy += 0.03;
 
-        // draw outlines (no fixed colors — just use strokeStyle default)
-        ctx.save();
-        ctx.translate(p.x, p.y);
-        ctx.rotate(p.r);
+        cctx.save();
+        cctx.translate(p.x, p.y);
+        cctx.rotate(p.rot);
 
         if (p.shape === "heart"){
-          ctx.lineWidth = 2;
-          ctx.globalAlpha = 0.8;
-          drawHeart(0, 0, p.size);
+          fillHeart(cctx, 0, 0, p.size, p.color);
         } else {
-          ctx.lineWidth = 2;
-          ctx.globalAlpha = 0.75;
-          ctx.strokeRect(-p.size/2, -p.size/2, p.size, p.size);
+          cctx.globalAlpha = 0.9;
+          cctx.fillStyle = p.color;
+          cctx.fillRect(-p.size/2, -p.size/2, p.size, p.size);
         }
 
-        ctx.restore();
+        cctx.restore();
       }
 
-      // remove pieces that fell off screen
       confettiPieces = confettiPieces.filter(p => p.y < window.innerHeight + 40);
 
-      if (confettiPieces.length > 0) {
-        requestAnimationFrame(confettiFrame);
-      } else {
+      if (confettiPieces.length > 0) requestAnimationFrame(confettiFrame);
+      else {
         confettiRunning = false;
-        canvas.style.display = "none";
+        confettiCanvas.style.display = "none";
       }
     }
 
     function startConfetti(){
-      resizeCanvas();
-      canvas.style.display = "block";
-      makeConfetti(190);
+      confettiCanvas.style.display = "block";
+      makeConfetti(260);
       confettiRunning = true;
       requestAnimationFrame(confettiFrame);
-      // stop after ~3.5 seconds even if some remain
-      setTimeout(() => {
-        confettiPieces = [];
-      }, 3500);
+      setTimeout(()=>{ confettiPieces = []; }, 3200);
     }
 
     // ---------------------------
-    // YES CLICK: CONFETTI + MODAL
+    // YES click: fireworks hearts + multi-color confetti + modal
     // ---------------------------
     const yesModal = document.getElementById("yesModal");
     const closeModalBtn = document.getElementById("closeModalBtn");
@@ -470,7 +734,11 @@
       yesBtn.disabled = true;
       noWrap.style.display = "none";
 
+      // sounds + visuals
+      cuteYesSound();
+      startHeartFireworks();
       startConfetti();
+
       yesModal.style.display = "grid";
     });
 
@@ -478,7 +746,6 @@
       yesModal.style.display = "none";
     });
 
-    // click outside modal closes it
     yesModal.addEventListener("click", (e) => {
       if (e.target === yesModal) yesModal.style.display = "none";
     });
