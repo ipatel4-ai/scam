@@ -41,7 +41,7 @@
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cg fill='none' stroke='%23ff2f7a' stroke-width='3'%3E%3Cpath d='M60 78 C45 66 30 56 30 42 C30 32 38 25 48 25 C55 25 59 29 60 32 C61 29 65 25 72 25 C82 25 90 32 90 42 C90 56 75 66 60 78 Z'/%3E%3C/g%3E%3C/svg%3E");
     }
 
-    /* Floating background hearts layer */
+    /* Floating hearts layer */
     .hearts-layer{
       position: fixed;
       inset: 0;
@@ -85,7 +85,6 @@
       font-weight: 400;
     }
 
-    /* Subtitle stays fixed, does NOT run away */
     p{
       margin: 0 0 18px;
       color:#444;
@@ -131,19 +130,26 @@
       box-shadow: 0 16px 34px rgba(255,47,122,0.28);
     }
 
-    /* Devil stays with the No button and runs away */
+    /* No bundle */
     #noWrap{
       display:inline-flex;
       align-items:center;
       gap:10px;
       position: relative;
     }
+
+    /* Devil hidden initially; appears only after hovering No */
     #devil{
       font-size:24px;
       line-height:1;
       filter: drop-shadow(0 6px 10px rgba(0,0,0,0.15));
       transform: translateY(1px);
+      display: none;
     }
+    #devil.show{
+      display: inline-block;
+    }
+
     #noBtn{
       background:#ededed;
       color:#222;
@@ -352,15 +358,18 @@
     setInterval(spawnHeart, 450);
 
     // ---------------------------
-    // NO button + devil runaway (stays on screen)
-    // After hover over the No option, the button text changes to "Nice try"
+    // NO + devil behavior
+    // Devil appears only after hovering No (and stays with No).
+    // "No 🙃" becomes "Nice try 😈" after first hover.
+    // The devil "takes away" the No option by appearing and fleeing with it.
     // ---------------------------
     const pxPerInch = 96;
-    const radiusPx = 2 * pxPerInch; // used for sticky chase once she gets on it
+    const radiusPx = 2 * pxPerInch;
     const margin = 10;
 
     const noWrap = document.getElementById("noWrap");
     const noBtn  = document.getElementById("noBtn");
+    const devil  = document.getElementById("devil");
     const yesBtn = document.getElementById("yesBtn");
     const result = document.getElementById("result");
 
@@ -430,48 +439,59 @@
     }
     window.addEventListener("mousemove", handleMouseMove);
 
-    // On first hover over the NO option, change text to "Nice try"
+    // Hovering NO reveals devil + changes button text, then devil "takes it away" (detach + flee)
     noBtn.addEventListener("mouseenter", () => {
       if (!hasHoveredNo) {
         hasHoveredNo = true;
-        noBtn.textContent = "Nice try 😈";
+        devil.classList.add("show");      // devil appears ONLY now
+        noBtn.textContent = "Nice try 😈"; // change label after hover
+      } else {
+        devil.classList.add("show");      // ensure visible on subsequent hovers
       }
-      // Enable sticky chase only while she's actually on it
+
+      // Devil "takes it away": detach and start fleeing immediately
       detachIfNeeded();
+      moveRandomAway();
+
+      // Sticky chase only while she's on it (optional)
       tracking = true;
       noWrap.classList.remove("smooth");
       noWrap.classList.add("track");
       beep(520, 0.05, "sine", 0.03);
     });
 
-    // When leaving the button, stop sticky chase (go back to random flee mode)
     noBtn.addEventListener("mouseleave", () => {
       tracking = false;
       noWrap.classList.add("smooth");
       noWrap.classList.remove("track");
+      // devil stays visible once introduced (keeps running away with it)
     });
 
-    // Mobile: treat touch as hover/enter
     noBtn.addEventListener("touchstart", (e) => {
       e.preventDefault();
       if (!hasHoveredNo) {
         hasHoveredNo = true;
+        devil.classList.add("show");
         noBtn.textContent = "Nice try 😈";
+      } else {
+        devil.classList.add("show");
       }
+
       detachIfNeeded();
+      moveRandomAway();
+
       tracking = true;
       noWrap.classList.remove("smooth");
       noWrap.classList.add("track");
       beep(520, 0.06, "sine", 0.03);
     }, { passive:false });
 
-    // Always prevent click
     noBtn.addEventListener("click", (e) => {
       e.preventDefault();
       moveRandomAway();
     });
 
-    // Sticky chase loop: keep within ~2-inch radius, follow speed depends on cursor speed
+    // Sticky chase loop
     function animate(){
       const now = performance.now();
       const dt = Math.max(1, now - prevMouse.t);
@@ -555,7 +575,6 @@
           life: rand(38, 70),
           color: heartColors[Math.floor(Math.random()*heartColors.length)],
           size: rand(6, 12),
-          rot: rand(0, Math.PI*2),
           vr: rand(-0.12, 0.12)
         });
       }
@@ -584,7 +603,6 @@
       if (!fireworksRunning) return;
 
       fctx.clearRect(0,0,window.innerWidth, window.innerHeight);
-
       bursts = bursts.filter(parts => parts.length > 0);
 
       for (const parts of bursts){
@@ -594,7 +612,6 @@
           p.y += p.vy;
           p.vx *= 0.985;
           p.vy = p.vy*0.985 + 0.04;
-          p.rot += p.vr;
           p.life -= 1;
 
           drawHeartOutline(fctx, p.x, p.y, p.size, p.color);
@@ -625,7 +642,7 @@
       }
     }
 
-    // Multicolor confetti (filled)
+    // Multicolor confetti
     let confettiPieces = [];
     let confettiRunning = false;
     const confettiColors = ["#ff2f7a","#ffd166","#06d6a0","#118ab2","#9b5de5","#ff595e","#8ac926","#1982c4","#ffca3a"];
@@ -642,32 +659,13 @@
           vr: (Math.random()-0.5)*0.25,
           size,
           color: confettiColors[Math.floor(Math.random()*confettiColors.length)],
-          shape: Math.random()<0.2 ? "heart" : "rect",
           wobble: Math.random()*1000
         };
       });
     }
 
-    function fillHeart(ctx, x, y, s, color){
-      ctx.save();
-      ctx.translate(x,y);
-      ctx.beginPath();
-      const t = s*0.3;
-      ctx.moveTo(0, t);
-      ctx.bezierCurveTo(0, 0, -s/2, 0, -s/2, t);
-      ctx.bezierCurveTo(-s/2, (s+t)/2, 0, (s+t)/2, 0, s);
-      ctx.bezierCurveTo(0, (s+t)/2, s/2, (s+t)/2, s/2, t);
-      ctx.bezierCurveTo(s/2, 0, 0, 0, 0, t);
-      ctx.closePath();
-      ctx.fillStyle = color;
-      ctx.globalAlpha = 0.92;
-      ctx.fill();
-      ctx.restore();
-    }
-
     function confettiFrame(){
       if (!confettiRunning) return;
-
       cctx.clearRect(0,0,window.innerWidth, window.innerHeight);
 
       for (const p of confettiPieces){
@@ -681,14 +679,9 @@
         cctx.save();
         cctx.translate(p.x, p.y);
         cctx.rotate(p.rot);
-
-        if (p.shape === "heart"){
-          fillHeart(cctx, 0, 0, p.size, p.color);
-        } else {
-          cctx.globalAlpha = 0.9;
-          cctx.fillStyle = p.color;
-          cctx.fillRect(-p.size/2, -p.size/2, p.size, p.size);
-        }
+        cctx.globalAlpha = 0.92;
+        cctx.fillStyle = p.color;
+        cctx.fillRect(-p.size/2, -p.size/2, p.size, p.size);
         cctx.restore();
       }
 
@@ -707,8 +700,7 @@
     }
 
     // ---------------------------
-    // YES click: keep devil running away until YES, then hide it.
-    // (We already hide noWrap on yes.)
+    // YES click: hide the runaway No+devil only after YES
     // ---------------------------
     const yesModal = document.getElementById("yesModal");
     const closeModalBtn = document.getElementById("closeModalBtn");
@@ -717,7 +709,7 @@
       result.textContent = "YAY!!! 💘💘";
       yesBtn.disabled = true;
 
-      // Devil + No disappear only after YES
+      // Now remove No+devil
       noWrap.style.display = "none";
 
       cuteYesSound();
