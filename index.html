@@ -41,7 +41,7 @@
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cg fill='none' stroke='%23ff2f7a' stroke-width='3'%3E%3Cpath d='M60 78 C45 66 30 56 30 42 C30 32 38 25 48 25 C55 25 59 29 60 32 C61 29 65 25 72 25 C82 25 90 32 90 42 C90 56 75 66 60 78 Z'/%3E%3C/g%3E%3C/svg%3E");
     }
 
-    /* Floating hearts layer */
+    /* Floating hearts */
     .hearts-layer{
       position: fixed;
       inset: 0;
@@ -137,18 +137,14 @@
       gap:10px;
       position: relative;
     }
-
-    /* Devil hidden initially; appears only after hovering No */
     #devil{
       font-size:24px;
       line-height:1;
       filter: drop-shadow(0 6px 10px rgba(0,0,0,0.15));
       transform: translateY(1px);
-      display: none;
+      display:none; /* hidden at start */
     }
-    #devil.show{
-      display: inline-block;
-    }
+    #devil.show{ display:inline-block; }
 
     #noBtn{
       background:#ededed;
@@ -156,21 +152,16 @@
       box-shadow: 0 8px 18px rgba(0,0,0,0.08);
     }
 
-    /* Free-floating state for No+devil */
+    /* Free-floating No+devil (moves smoothly) */
     #noWrap.free{
       position:fixed;
       left: 50%;
       top: 50%;
       transform: translate(-50%, -50%);
       z-index:5;
-      will-change:left, top;
-    }
-    #noWrap.smooth{
       transition: left 420ms cubic-bezier(.2,.9,.2,1),
                   top  420ms cubic-bezier(.2,.9,.2,1);
-    }
-    #noWrap.track{
-      transition: none;
+      will-change:left, top;
     }
 
     .result{
@@ -358,50 +349,36 @@
     setInterval(spawnHeart, 450);
 
     // ---------------------------
-    // NO + devil behavior
-    // Devil appears only after hovering No (and stays with No).
-    // "No 🙃" becomes "Nice try 😈" after first hover.
-    // The devil "takes away" the No option by appearing and fleeing with it.
+    // NO + devil runaway: ALWAYS stays within viewport
+    // (Random positions only — smooth motion)
     // ---------------------------
-    const pxPerInch = 96;
-    const radiusPx = 2 * pxPerInch;
-    const margin = 10;
+    const margin = 12;
 
     const noWrap = document.getElementById("noWrap");
     const noBtn  = document.getElementById("noBtn");
     const devil  = document.getElementById("devil");
-    const yesBtn = document.getElementById("yesBtn");
-    const result = document.getElementById("result");
 
     let isFree = false;
-    let tracking = false;
     let hasHoveredNo = false;
-
-    let mouse = { x: window.innerWidth/2, y: window.innerHeight/2 };
-    let prevMouse = { x: mouse.x, y: mouse.y, t: performance.now() };
-    let currentPos = null;
 
     function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
 
-    function clampToViewport(left, top, el){
-      const r = el.getBoundingClientRect();
-      const maxL = window.innerWidth  - r.width  - margin;
-      const maxT = window.innerHeight - r.height - margin;
-      return { left: clamp(left, margin, maxL), top: clamp(top, margin, maxT) };
+    function getMaxXY(){
+      const r = noWrap.getBoundingClientRect();
+      return {
+        maxX: Math.max(margin, window.innerWidth  - r.width  - margin),
+        maxY: Math.max(margin, window.innerHeight - r.height - margin)
+      };
     }
 
     function detachIfNeeded(){
       if (isFree) return;
       const rect = noWrap.getBoundingClientRect();
-      noWrap.classList.add("free", "smooth");
-      noWrap.classList.remove("track");
+      noWrap.classList.add("free");
 
-      const left = rect.left + rect.width/2;
-      const top  = rect.top  + rect.height/2;
-
-      currentPos = { left, top };
-      noWrap.style.left = left + "px";
-      noWrap.style.top  = top  + "px";
+      // lock to current position (center)
+      noWrap.style.left = (rect.left + rect.width/2) + "px";
+      noWrap.style.top  = (rect.top  + rect.height/2) + "px";
       noWrap.style.transform = "translate(-50%, -50%)";
       isFree = true;
     }
@@ -409,64 +386,51 @@
     function moveRandomAway(){
       detachIfNeeded();
 
-      const left = margin + Math.random() * (window.innerWidth  - 2*margin);
-      const top  = margin + Math.random() * (window.innerHeight - 2*margin);
-      const clamped = clampToViewport(left, top, noWrap);
-      currentPos = { left: clamped.left, top: clamped.top };
+      const { maxX, maxY } = getMaxXY();
 
-      noWrap.classList.add("smooth");
-      noWrap.classList.remove("track");
-      noWrap.style.left = currentPos.left + "px";
-      noWrap.style.top  = currentPos.top  + "px";
+      // generate a CENTER position that ensures the element stays fully visible:
+      // since we use translate(-50%, -50%), left/top are the CENTER of the element
+      const r = noWrap.getBoundingClientRect();
+      const minCenterX = margin + r.width/2;
+      const maxCenterX = window.innerWidth - margin - r.width/2;
+      const minCenterY = margin + r.height/2;
+      const maxCenterY = window.innerHeight - margin - r.height/2;
+
+      const x = clamp(minCenterX + Math.random() * Math.max(0, (maxCenterX - minCenterX)), minCenterX, maxCenterX);
+      const y = clamp(minCenterY + Math.random() * Math.max(0, (maxCenterY - minCenterY)), minCenterY, maxCenterY);
+
+      noWrap.style.left = x + "px";
+      noWrap.style.top  = y + "px";
 
       beep(220, 0.05, "square", 0.03);
     }
 
+    // Proximity flee (before hover)
     function handleMouseMove(e){
-      mouse.x = e.clientX;
-      mouse.y = e.clientY;
-
-      if (tracking) return;
-
       const r = noWrap.getBoundingClientRect();
       const cx = r.left + r.width/2;
       const cy = r.top  + r.height/2;
 
-      const dist = Math.hypot(mouse.x - cx, mouse.y - cy);
+      const dist = Math.hypot(e.clientX - cx, e.clientY - cy);
       const triggerDistance = 120;
 
       if (dist < triggerDistance) moveRandomAway();
     }
     window.addEventListener("mousemove", handleMouseMove);
 
-    // Hovering NO reveals devil + changes button text, then devil "takes it away" (detach + flee)
+    // Hover over No: reveal devil + change label; devil "takes it away" (flee)
     noBtn.addEventListener("mouseenter", () => {
       if (!hasHoveredNo) {
         hasHoveredNo = true;
-        devil.classList.add("show");      // devil appears ONLY now
-        noBtn.textContent = "Nice try 😈"; // change label after hover
+        devil.classList.add("show");
+        noBtn.textContent = "Nice try 😈";
       } else {
-        devil.classList.add("show");      // ensure visible on subsequent hovers
+        devil.classList.add("show");
       }
-
-      // Devil "takes it away": detach and start fleeing immediately
-      detachIfNeeded();
       moveRandomAway();
-
-      // Sticky chase only while she's on it (optional)
-      tracking = true;
-      noWrap.classList.remove("smooth");
-      noWrap.classList.add("track");
-      beep(520, 0.05, "sine", 0.03);
     });
 
-    noBtn.addEventListener("mouseleave", () => {
-      tracking = false;
-      noWrap.classList.add("smooth");
-      noWrap.classList.remove("track");
-      // devil stays visible once introduced (keeps running away with it)
-    });
-
+    // Mobile tap near No: same behavior
     noBtn.addEventListener("touchstart", (e) => {
       e.preventDefault();
       if (!hasHoveredNo) {
@@ -476,66 +440,24 @@
       } else {
         devil.classList.add("show");
       }
-
-      detachIfNeeded();
       moveRandomAway();
-
-      tracking = true;
-      noWrap.classList.remove("smooth");
-      noWrap.classList.add("track");
-      beep(520, 0.06, "sine", 0.03);
     }, { passive:false });
 
+    // If somehow clicked, still flee
     noBtn.addEventListener("click", (e) => {
       e.preventDefault();
       moveRandomAway();
     });
 
-    // Sticky chase loop
-    function animate(){
-      const now = performance.now();
-      const dt = Math.max(1, now - prevMouse.t);
-
-      const vx = (mouse.x - prevMouse.x) / dt;
-      const vy = (mouse.y - prevMouse.y) / dt;
-      const speed = Math.hypot(vx, vy);
-
-      prevMouse = { x: mouse.x, y: mouse.y, t: now };
-
-      if (tracking && isFree && currentPos){
-        const angle = Math.atan2(vy || 0.001, vx || 0.001) + Math.PI;
-        const targetLeft = mouse.x + Math.cos(angle) * radiusPx * 0.65;
-        const targetTop  = mouse.y + Math.sin(angle) * radiusPx * 0.65;
-
-        const clamped = clampToViewport(targetLeft, targetTop, noWrap);
-
-        const follow = clamp(0.08 + speed * 0.9, 0.08, 0.45);
-
-        currentPos.left += (clamped.left - currentPos.left) * follow;
-        currentPos.top  += (clamped.top  - currentPos.top)  * follow;
-
-        const again = clampToViewport(currentPos.left, currentPos.top, noWrap);
-        currentPos.left = again.left;
-        currentPos.top  = again.top;
-
-        noWrap.style.left = currentPos.left + "px";
-        noWrap.style.top  = currentPos.top  + "px";
-      }
-
-      requestAnimationFrame(animate);
-    }
-    requestAnimationFrame(animate);
-
+    // On resize, clamp it back into view if it's free
     window.addEventListener("resize", () => {
-      if (!isFree || !currentPos) return;
-      const clamped = clampToViewport(currentPos.left, currentPos.top, noWrap);
-      currentPos = clamped;
-      noWrap.style.left = currentPos.left + "px";
-      noWrap.style.top  = currentPos.top  + "px";
+      if (!isFree) return;
+      // Move it once to ensure it's within the new bounds
+      moveRandomAway();
     });
 
     // ---------------------------
-    // Heart fireworks + multicolor confetti on YES
+    // Heart fireworks + multicolor confetti on YES (unchanged)
     // ---------------------------
     const fireworksCanvas = document.getElementById("fireworksCanvas");
     const fctx = fireworksCanvas.getContext("2d");
@@ -699,17 +621,17 @@
       setTimeout(()=>{ confettiPieces = []; }, 3200);
     }
 
-    // ---------------------------
-    // YES click: hide the runaway No+devil only after YES
-    // ---------------------------
+    // YES click
     const yesModal = document.getElementById("yesModal");
     const closeModalBtn = document.getElementById("closeModalBtn");
+    const yesBtn = document.getElementById("yesBtn");
+    const result = document.getElementById("result");
 
     yesBtn.addEventListener("click", () => {
       result.textContent = "YAY!!! 💘💘";
       yesBtn.disabled = true;
 
-      // Now remove No+devil
+      // remove No + devil only after YES
       noWrap.style.display = "none";
 
       cuteYesSound();
