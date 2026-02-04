@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Valentine?</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: grid;
+      place-items: center;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: linear-gradient(135deg, #ffd6e7, #fff1f7);
+      overflow: hidden;
+    }
+
+    .card {
+      background: rgba(255,255,255,0.85);
+      border: 1px solid rgba(0,0,0,0.08);
+      border-radius: 18px;
+      padding: 28px 26px;
+      box-shadow: 0 12px 35px rgba(0,0,0,0.12);
+      text-align: center;
+      width: min(520px, 92vw);
+    }
+
+    h1 {
+      margin: 0 0 14px;
+      font-size: clamp(28px, 4vw, 42px);
+    }
+
+    p {
+      margin: 0 0 20px;
+      color: #444;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 14px;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+      position: relative;
+    }
+
+    button {
+      font-size: 18px;
+      padding: 12px 22px;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      transition: transform 120ms ease;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    button:active { transform: scale(0.98); }
+
+    #yesBtn {
+      background: #ff4d88;
+      color: white;
+    }
+
+    /* The "No" button will be moved with JS, so position it absolutely */
+    #noBtn {
+      background: #e9e9e9;
+      color: #222;
+      position: absolute;
+    }
+
+    .result {
+      margin-top: 16px;
+      font-size: 18px;
+      font-weight: 600;
+      color: #ff2f7a;
+      min-height: 24px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Do you want to be my valentine?</h1>
+    <p>(Choose wisely 😌)</p>
+
+    <div class="buttons" id="buttonArea">
+      <button id="yesBtn">Yes 💖</button>
+      <button id="noBtn">No 🙃</button>
+    </div>
+
+    <div class="result" id="result"></div>
+  </div>
+
+  <script>
+    const noBtn = document.getElementById("noBtn");
+    const yesBtn = document.getElementById("yesBtn");
+    const buttonArea = document.getElementById("buttonArea");
+    const result = document.getElementById("result");
+
+    // Place the "No" button initially (so it doesn't overlap)
+    function placeNoInitial() {
+      const areaRect = buttonArea.getBoundingClientRect();
+      // Put it slightly to the right of center at start
+      noBtn.style.left = `${areaRect.width / 2 + 70}px`;
+      noBtn.style.top  = `${6}px`;
+    }
+
+    // Move "No" button to a random position within the buttonArea
+    function moveNoButton() {
+      const areaRect = buttonArea.getBoundingClientRect();
+      const btnRect = noBtn.getBoundingClientRect();
+
+      const padding = 6;
+      const maxX = areaRect.width - btnRect.width - padding;
+      const maxY = areaRect.height - btnRect.height - padding;
+
+      const x = Math.max(padding, Math.random() * maxX);
+      const y = Math.max(padding, Math.random() * maxY);
+
+      noBtn.style.left = `${x}px`;
+      noBtn.style.top = `${y}px`;
+    }
+
+    // Make the area tall enough so "No" has room to run
+    function ensureAreaSpace() {
+      // Increase height a bit to give "No" room to dodge
+      buttonArea.style.height = "90px";
+      buttonArea.style.minHeight = "90px";
+    }
+
+    // Desktop: run away when mouse gets near / hover
+    noBtn.addEventListener("mouseenter", moveNoButton);
+    noBtn.addEventListener("mousemove", moveNoButton);
+
+    // Mobile: run away on touchstart so it still works on phones
+    noBtn.addEventListener("touchstart", (e) => {
+      e.preventDefault();
+      moveNoButton();
+    }, { passive: false });
+
+    // If she somehow clicks No, still block it (extra safety lol)
+    noBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      moveNoButton();
+    });
+
+    yesBtn.addEventListener("click", () => {
+      result.textContent = "YAY!!! 💘💘 See you on Valentine’s 😄";
+      // Optional: disable buttons after yes
+      yesBtn.disabled = true;
+      noBtn.style.display = "none";
+    });
+
+    // Init
+    ensureAreaSpace();
+    window.addEventListener("load", () => {
+      placeNoInitial();
+    });
+    window.addEventListener("resize", () => {
+      placeNoInitial();
+    });
+  </script>
+</body>
+</html>
+
